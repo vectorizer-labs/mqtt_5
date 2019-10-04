@@ -11,8 +11,6 @@ use flags::retain::Retain;
 
 //This file implements the MQTT control packet format as written in the 
 //MQTT 5.0 spec here: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901019
-
-
 pub enum FixedHeader
 {
     RESERVED,
@@ -67,13 +65,11 @@ impl FixedHeader
     }
 }
 
-pub async fn read_control_packet_type_and_flags(mut reader: &mut BufReader<runtime::net::tcp::TcpStream>) -> FixedHeader
+pub async fn read_control_packet_type_and_flags(data: &[u8]) -> FixedHeader
 {
-    let first_byte = read_byte(&mut reader).await;
-
     //get the four bit values via bitwise AND
-    let raw_type : u8 = first_byte & 0b00001111u8;
-    let raw_flag : u8 = first_byte & 0b1111u8;
+    let raw_type : u8 = data[0] & 0b00001111u8;
+    let raw_flag : u8 = data[0] & 0b1111u8;
 
     FixedHeader::from_u8_and_flags(raw_type, raw_flag)
 

@@ -1,4 +1,4 @@
-use num_derive::FromPrimitive;    
+/*use num_derive::FromPrimitive;    
 use num_traits::FromPrimitive;
 
 use futures::io::{BufReader};
@@ -64,4 +64,4 @@ impl ReasonCode
             None => panic!("couldn't parse reason code because it was malformed!")
         }
     }
-}
+}*/

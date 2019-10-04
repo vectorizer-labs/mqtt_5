@@ -1,9 +1,12 @@
-#[derive(Debug, Clone, PartialEq)]
+use packattack::FromBytes;
+
+#[derive(Clone, Copy, Debug, PartialEq, FromBytes)]
+#[repr(u8)]
 pub enum QoS
 {
-    AtMostOnce,
-    AtLeastOnce,
-    ExactlyOnce
+    AtMostOnce = 0,
+    AtLeastOnce = 1,
+    ExactlyOnce = 2
 }
 
 impl QoS

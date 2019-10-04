@@ -1,59 +1,66 @@
-mod fixed_header;
-mod properties;
-mod reason_code;
-mod low_level_read;
-mod payload;
+#![feature(arbitrary_enum_discriminant)]
+#![feature(box_syntax, test, fmt_internals)]
+
+#[macro_use]
+extern crate packattack_derive;
+
+use packattack::FromBytes;
+use packattack::FromByte;
+
+
+mod connect;
 mod qos;
 
-
-//mod connect;
-//use connect::{protocol::Protocol, protocol::ProtocolLevel, connect_flags::ConnectFlags, keep_alive::KeepAlive};
-
-
-use futures::io::{BufReader};
-use futures::prelude::*;
-
-use payload::Payload;
-
-//TODO implement this as a trait of a BufferedStream when Rust 
-pub async fn read_packet(mut reader: &mut BufReader<runtime::net::tcp::TcpStream>)// -> Packet
+#[allow(dead_code)]
+#[derive(Clone, Debug, PartialEq, FromBytes)]
+#[repr(u8)]
+enum Packet 
 {
-    //read the fixed header of the control packet
-    let header = fixed_header::read_control_packet_type_and_flags(&mut reader).await;
-
-    let remaining_length = low_level_read::read_variable_byte_integer(&mut reader).await;
-
-	let mut remaining_packet_data : Vec<u8> = Vec::with_capacity(remaining_length as usize);
-    let read_result = reader.read_exact(&mut remaining_packet_data).await;
-	
-	/*
-	match read_result
-	{
-		//make sure we read all the bytes we needed
-		Ok(n) => assert_eq!(n, remaining_length),
-		Err(e) => panic!(e)
-	}*/
-
-	println!("header: {:?}", header);
-
+    CONNECT(connect::Protocol, connect::ProtocolLevel, connect::ConnectFlags, connect::KeepAlive) = 0,
+    CONNACK = 1,
+    PUBLISH = 2,
+    PUBACK = 3,
+    PUBREC = 4,
+    PUBREL = 5,
+    PUBCOMP = 6,
+    SUBSCRIBE = 7,
+    SUBACK = 8,
+    UNSUBSCRIBE = 9,
+    UNSUBACK = 10,
+    PINGREQ = 11,
+    PINGRESP = 12,
+    DISCONNECT = 13,
+    AUTH = 14
 }
 
+#[cfg(test)]
+mod test
+{
+    use super::*;
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Packet {
-	//CONNECT(Protocol, ProtocolLevel, ConnectFlags, KeepAlive),
-	CONNACK,
-	PUBLISH(Payload),
-	PUBACK,
-	PUBREC,
-	PUBREL,
-	PUBCOMP,
-	SUBSCRIBE(Payload),
-	SUBACK(Payload),
-	UNSUBSCRIBE(Payload),
-	UNSUBACK(Payload),
-	PINGREQ,
-	PINGRESP,
-	DISCONNECT,
-	AUTH
+    #[test]
+    fn build_packet_from_bytes()
+    {
+        let bytes : [u8;3] = [8,0,0];
+
+        let mut count = 0;
+
+        let parsed_packet = Packet::read_from_bytes(&bytes, &mut count);
+
+        assert_eq!(Packet::SUBACK, parsed_packet);
+    }
+
+    #[test]
+    fn build_Connect_from_byte()
+    {
+        let byte : [u8;1] = [0b01110101];
+
+        let mut count = 0;
+
+        let parsed_connect = connect::ConnectFlags::read_from_bytes(&byte, &mut count);
+
+        println!("connect: {:#? } ", parsed_connect);
+
+        //assert_eq!(Packet::SUBACK, parsed_packet);
+    }
 }
