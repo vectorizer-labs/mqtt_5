@@ -5,8 +5,6 @@
 extern crate packattack_derive;
 
 use packattack::FromBytes;
-use packattack::FromByte;
-
 
 mod connect;
 mod qos;
@@ -51,9 +49,9 @@ mod test
     }
 
     #[test]
-    fn build_Connect_from_byte()
+    fn build_connect_from_byte()
     {
-        let byte : [u8;1] = [0b01110101];
+        let byte : [u8;1] = [0b11110110];
 
         let mut count = 0;
 

@@ -29,6 +29,7 @@ use std::fmt;
 use packattack::FromBytes;
 use packattack::FromByte;
 
+#[allow(non_snake_case)]
 #[derive(Clone, Copy, Debug, PartialEq, FromBytes)]
 pub struct ConnectFlags
 {
