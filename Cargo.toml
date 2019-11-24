@@ -6,5 +6,5 @@ edition = "2018"
 
 
 [dependencies]
-packattack = { path = "C:\\Users\\Ethan\\Desktop\\packattack" }
 packattack_derive = { path = "C:\\Users\\Ethan\\Desktop\\packattack-derive" }
+bitreader = "0.3.2"

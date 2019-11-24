@@ -1,7 +1,6 @@
-use packattack::FromByte;
+use super::FromBitReader;
 
-#[allow(non_snake_case)]
-#[derive(Clone, Copy, Debug, PartialEq, FromByte)]
+#[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
 #[size_in_bits = 2]
 #[repr(u8)]
 pub enum QoS

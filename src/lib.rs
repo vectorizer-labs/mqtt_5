@@ -4,13 +4,11 @@
 #[macro_use]
 extern crate packattack_derive;
 
-use packattack::FromBytes;
-
 mod connect;
-mod qos;
+mod data_representation;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug, PartialEq, FromBytes)]
+#[derive(Clone, Debug, PartialEq)]
 #[repr(u8)]
 enum Packet 
 {
@@ -29,36 +27,4 @@ enum Packet
     PINGRESP = 12,
     DISCONNECT = 13,
     AUTH = 14
-}
-
-#[cfg(test)]
-mod test
-{
-    use super::*;
-
-    #[test]
-    fn build_packet_from_bytes()
-    {
-        let bytes : [u8;3] = [8,0,0];
-
-        let mut count = 0;
-
-        let parsed_packet = Packet::read_from_bytes(&bytes, &mut count);
-
-        assert_eq!(Packet::SUBACK, parsed_packet);
-    }
-
-    #[test]
-    fn build_connect_from_byte()
-    {
-        let byte : [u8;1] = [0b11110110];
-
-        let mut count = 0;
-
-        let parsed_connect = connect::ConnectFlags::read_from_bytes(&byte, &mut count);
-
-        println!("connect: {:#? } ", parsed_connect);
-
-        //assert_eq!(Packet::SUBACK, parsed_packet);
-    }
 }

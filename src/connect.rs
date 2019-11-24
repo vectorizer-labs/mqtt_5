@@ -1,49 +1,47 @@
 pub type KeepAlive = u16;
 
-pub type Protocol = String;
+use super::data_representation::UTF8EncodedString;
 
-/*pub enum Protocol
+#[derive(Clone, Debug, PartialEq)]
+pub enum Protocol
 {
     MQTT,
     MQIsdp
 }
 
-impl Protocol
+impl FromBitReader for Protocol
 {
-    pub fn from_string(protocol : &str) -> Protocol
+    fn from_bitreader(reader : &mut BitReader) -> Result<Protocol>
     {
-        match protocol 
+
+        let protocol = UTF8EncodedString::from_bitreader(reader).unwrap();
+
+        match protocol.as_str()
         {
-            "MQTT" => Protocol::MQTT,
+            "MQTT" => Ok(Protocol::MQTT),
             _ => panic!("Couldn't parse control packet because the client tried to use a protocol other than MQTT!")
         }
     }
-}*/
+}
 
 pub type ProtocolLevel = u8;
 
-use super::qos::QoS;
-use std::error;
-use std::fmt;
-
-use packattack::FromBytes;
-use packattack::FromByte;
+use super::data_representation::{ FromBitReader , qos::QoS};
 
 #[allow(non_snake_case)]
-#[derive(Clone, Copy, Debug, PartialEq, FromBytes)]
+#[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
 pub struct ConnectFlags
 {
-    #[start_byte]
-    UserNameFlag : bool,
-    PasswordFlag : bool,
-    WillRetain : bool,
-    WillQoS : QoS,
-    WillFlag : bool,
-    #[end_byte]
-    CleanStart: bool
+    pub UserNameFlag : bool,
+    pub PasswordFlag : bool,
+    pub WillRetain : bool,
+    pub WillQoS : QoS,
+    pub WillFlag : bool,
+    pub CleanStart: bool,
+    pub Reserve : bool
     
 }
-
+/*
 #[derive(Debug, Clone)]
 pub struct MalformedConnectFlagsError;
 
@@ -58,5 +56,35 @@ impl error::Error for MalformedConnectFlagsError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         // Generic error, underlying cause isn't tracked.
         None
+    }
+}*/
+
+#[cfg(test)]
+mod test
+{
+    use super::*;
+    use bitreader::BitReader;
+
+    #[test]
+    fn build_connect_from_byte()
+    {
+        let byte : [u8;1] = [0b11110110];
+
+        let mut reader = BitReader::new(&byte);
+
+        let parsed_connect = ConnectFlags::from_bitreader(&mut reader).unwrap();
+
+        println!("connect: {:#? } ", parsed_connect);
+
+        assert_eq!(parsed_connect, ConnectFlags
+        {
+            UserNameFlag : true,
+            PasswordFlag : true,
+            WillRetain : true,
+            WillQoS : super::super::data_representation::qos::QoS::ExactlyOnce,
+            WillFlag : true,
+            CleanStart : true,
+            Reserve : false
+        });
     }
 }

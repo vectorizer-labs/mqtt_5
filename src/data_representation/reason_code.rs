@@ -1,15 +1,13 @@
-/*use num_derive::FromPrimitive;    
-use num_traits::FromPrimitive;
+use super::FromBitReader;
 
-use futures::io::{BufReader};
-use super::low_level_read::*;
-
-#[derive(FromPrimitive)]
+#[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
+#[size_in_bits = 8]
+#[repr(u8)]
 pub enum ReasonCode
 {
     Success = 0,
-    //NormalDisconnection,
-    //GrantedQoS0,
+    //NormalDisconnection = 0,
+    //GrantedQoS0 = 0,
     GrantedQoS1 = 1,
     GrantedQoS2 = 2,
     DisconnectWithWillMessage = 4,
@@ -53,15 +51,3 @@ pub enum ReasonCode
     SubscriptionIdentifiersNotSupported = 161,
     WildcardSubscriptionsNotSupported = 162
 }
-
-impl ReasonCode
-{
-    pub fn from_u8(code: u8) -> ReasonCode
-    {
-        match FromPrimitive::from_u8(code)
-        {
-            Some(code) => return code,
-            None => panic!("couldn't parse reason code because it was malformed!")
-        }
-    }
-}*/
