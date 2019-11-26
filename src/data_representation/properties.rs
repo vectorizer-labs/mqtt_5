@@ -1,7 +1,7 @@
 use super::FromBitReader;
 
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
-#[size_in_bits = 2]
+#[size_in_bits = 8]
 #[repr(u8)]
 pub enum Property
 {
@@ -33,3 +33,20 @@ pub enum Property
     SubscriptionIdentifierAvailible(u8) = 41,
     SharedSubscriptionAvailible(u8) = 42
 }
+
+pub type Properties = Vec<Property>;
+
+/*
+impl FromBitReader for Properties
+{
+    fn from_bitreader(reader : &mut BitReader) -> Result<Properties>
+    {
+        let length = super::VariableByteInteger::from_bitreader(reader)?;
+
+        //TODO get the index from bitreader
+
+        //while(end > bitreader.index)
+        //{ read Properties }
+    }
+
+}*/

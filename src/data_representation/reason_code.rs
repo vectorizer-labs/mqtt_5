@@ -1,7 +1,9 @@
 use super::FromBitReader;
 
+use super::VariableByteInteger;
+
 #[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
-#[size_in_bits = 8]
+#[size_in_bits = "VariableByteInteger"]
 #[repr(u8)]
 pub enum ReasonCode
 {
