@@ -1,4 +1,7 @@
 use super::FromBitReader;
+use super::super::error::Result;
+use async_std::io::Read;
+use async_trait::async_trait;
 
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
 #[size_in_bits = 8]
@@ -36,17 +39,26 @@ pub enum Property
 
 pub type Properties = Vec<Property>;
 
-/*
-impl FromBitReader for Properties
+#[async_trait]
+impl<R> FromBitReader<R> for Properties where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<Properties>
+    async fn from_bitreader(reader : &mut bitreader_async::BitReader<R>) -> Result<Properties>
     {
-        let length = super::VariableByteInteger::from_bitreader(reader)?;
+        let length = super::VariableByteInteger::from_bitreader(reader).await?;
 
-        //TODO get the index from bitreader
+        let mut props : Vec<Property> = Vec::new();
 
-        //while(end > bitreader.index)
-        //{ read Properties }
+        let end = reader.byte_count() + usize::from(length.clone()); 
+
+        println!("length : {}, start : {}, end : {}", usize::from(length), reader.byte_count(), end);
+
+        //TODO: figure out a way to read the length remaining
+        while reader.byte_count() < &end
+        {
+            props.push(Property::from_bitreader(reader).await?)
+        }
+
+        Ok(props)
     }
 
-}*/
+}

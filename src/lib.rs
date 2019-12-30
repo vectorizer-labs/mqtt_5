@@ -1,30 +1,39 @@
+//This file implements the MQTT control packet format as written in the 
+//MQTT 5.0 spec here: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901019
 #![feature(arbitrary_enum_discriminant)]
-#![feature(box_syntax, test, fmt_internals)]
+#[macro_use] extern crate failure_derive;
 
-#[macro_use]
-extern crate packattack_derive;
+#[macro_use] extern crate packattack_derive;
 
 mod connect;
-mod data_representation;
+pub mod data_representation;
+pub mod error;
 
-#[allow(dead_code)]
-#[derive(Clone, Debug, PartialEq)]
+use error::Result;
+use data_representation::{ FromBitReader, reserved_flags::ReservedFlags};
+use async_std::io::Read;
+
+type RemainingLength = data_representation::VariableByteInteger;
+
+#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[size_in_bits = 4]
 #[repr(u8)]
-enum Packet 
+pub enum Packet 
 {
-    CONNECT(connect::Protocol, connect::ProtocolLevel, connect::ConnectFlags, connect::KeepAlive) = 0,
-    CONNACK = 1,
-    PUBLISH = 2,
-    PUBACK = 3,
-    PUBREC = 4,
-    PUBREL = 5,
-    PUBCOMP = 6,
-    SUBSCRIBE = 7,
-    SUBACK = 8,
-    UNSUBSCRIBE = 9,
-    UNSUBACK = 10,
-    PINGREQ = 11,
-    PINGRESP = 12,
-    DISCONNECT = 13,
-    AUTH = 14
+    
+    CONNECT(connect::Connect) = 0,
+    CONNACK(ReservedFlags, RemainingLength) = 1,
+    PUBLISH(ReservedFlags, RemainingLength) = 2,
+    PUBACK(ReservedFlags, RemainingLength) = 3,
+    PUBREC(ReservedFlags, RemainingLength) = 4,
+    PUBREL(ReservedFlags, RemainingLength) = 5,
+    PUBCOMP(ReservedFlags, RemainingLength) = 6,
+    SUBSCRIBE(ReservedFlags, RemainingLength) = 7,
+    SUBACK(ReservedFlags, RemainingLength) = 8,
+    UNSUBSCRIBE(ReservedFlags, RemainingLength) = 9,
+    UNSUBACK(ReservedFlags, RemainingLength) = 10,
+    PINGREQ(ReservedFlags, RemainingLength) = 11,
+    PINGRESP(ReservedFlags, RemainingLength) = 12,
+    DISCONNECT(ReservedFlags, RemainingLength) = 13,
+    AUTH(ReservedFlags, RemainingLength) = 14
 }

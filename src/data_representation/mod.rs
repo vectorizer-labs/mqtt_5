@@ -4,70 +4,84 @@ pub type FourByteInteger = u32;
 pub type UTF8EncodedString = String;
 pub type BinaryData = Vec<u8>;
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct VariableByteInteger(u32);
 
+
+pub type RemainingLength = VariableByteInteger;
 
 pub mod properties;
 pub mod qos;
 pub mod reason_code;
+pub mod reserved_flags;
 
+use async_trait::async_trait;
+use bitreader_async::BitReader;
+use async_std::io::{ Read };
+use super::error::Result;
 
-use bitreader::BitReader;
-use std::result;
-use std::error::Error;
-use std::error;
-use std::fmt;
-
-//TODO: Expand this definition to more errors
-/// Result type for those BitReader operations that can fail.
-pub type Result<T> = result::Result<T, Box<dyn Error>>;
-
-pub trait FromBitReader: Sized
+#[async_trait]
+pub trait FromBitReader<R> where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<Self>;
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<Self>;
 }
 
-impl FromBitReader for bool
+#[async_trait]
+impl<R> FromBitReader<R> for () where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<bool>
+    async fn from_bitreader(_reader : &mut BitReader<R>) -> Result<()>
     {
-        Ok(reader.read_bool()?)
+        Ok(())
     }
 }
 
-impl FromBitReader for Byte
+#[async_trait]
+impl<R> FromBitReader<R> for bool where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<Byte>
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<bool>
     {
-        Ok(reader.read_u8(8)?)
+        //TODO: fix reading bools
+        let num = reader.read_bits::<u8>(1).await?;
+        println!("num : {}", num);
+        Ok(num != 0)
     }
 }
 
-impl FromBitReader for TwoByteInteger
+#[async_trait]
+impl<R> FromBitReader<R> for Byte where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<TwoByteInteger>
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<Byte>
     {
-        Ok(reader.read_u16(16)?)
+        Ok(reader.read_aligned_be::<u8>().await?)
     }
 }
 
-impl FromBitReader for FourByteInteger
+#[async_trait]
+impl<R> FromBitReader<R> for TwoByteInteger where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<FourByteInteger>
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<TwoByteInteger>
     {
-        Ok(reader.read_u32(32)?)
+        Ok(reader.read_aligned_be::<u16>().await?)
     }
 }
 
-impl FromBitReader for UTF8EncodedString
+#[async_trait]
+impl<R> FromBitReader<R> for FourByteInteger where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<UTF8EncodedString>
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<FourByteInteger>
     {
-        let length = reader.read_u16(16)?;
+        Ok(reader.read_aligned_be::<u32>().await?)
+    }
+}
 
-        let mut vec_buffer : Vec<u8> = Vec::with_capacity(length as usize);
+#[async_trait]
+impl<R> FromBitReader<R> for UTF8EncodedString where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+{
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<UTF8EncodedString>
+    {
+        let length = reader.read_aligned_be::<u16>().await?;
 
-        reader.read_u8_slice(vec_buffer.as_mut_slice())?;
+        let vec_buffer : Vec<u8> = reader.read_u8_slice_aligned(length as usize).await?;
 
         let result = String::from_utf8(vec_buffer)?;
 
@@ -75,45 +89,43 @@ impl FromBitReader for UTF8EncodedString
     }
 }
 
-impl FromBitReader for BinaryData
+#[async_trait]
+impl<R> FromBitReader<R> for BinaryData where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<BinaryData>
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<BinaryData>
     {
-        let length = reader.read_u16(16)?;
+        let length = reader.read_aligned_be::<u16>().await?;
 
-        let mut vec : Vec<u8> = Vec::with_capacity(length as usize);
+        let vec_buffer : Vec<u8> = reader.read_u8_slice_aligned(length as usize).await?;
 
-        reader.read_u8_slice(vec.as_mut_slice())?;
-
-        Ok(vec)
+        Ok(vec_buffer)
     }
 }
 
-impl FromBitReader for VariableByteInteger
+#[async_trait]
+impl<R> FromBitReader<R> for VariableByteInteger where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    fn from_bitreader(reader : &mut BitReader) -> Result<VariableByteInteger>
+    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<VariableByteInteger>
     {
         let mut multiplier: u32 = 1;
         let mut value: u32 = 0;
-        
-        let mut raw_byte : [u8;1] = [0];
-        while (raw_byte[0] & 128)  != 0
+
+        loop
         {
             //read the next byte
-            reader.read_u8_slice(&mut raw_byte)?;
+            let encoded_byte = reader.read_aligned_be::<u8>().await?;
 
-            let encoded_byte: u32 = (raw_byte[0] as u32 & 127) * multiplier;
-            value += encoded_byte;
+            value += (encoded_byte as u32 & 127) * multiplier;
 
             //if we exceed the 4 byte limit throw MalformedVariableIntegerError
-            if multiplier > 128*128*128 { 
-                return Err(Box::new(MalformedVariableIntegerError))
-            }
+            if multiplier > 128*128*128 {  panic!("bad VariableByteInteger") /*return Err(Box::new(MalformedVariableIntegerError))*/ }
 
             multiplier *= 128;
+
+            if(encoded_byte & 128) == 0 { break; }
         }
 
-        Ok( VariableByteInteger(value))
+        Ok(VariableByteInteger(value))
     }
 }
 
@@ -124,24 +136,3 @@ impl From<VariableByteInteger> for usize
     }
 }
 
-pub struct MalformedVariableIntegerError;
-
-impl fmt::Debug for MalformedVariableIntegerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to parse VariableByteInteger!")
-    }
-}
-
-impl fmt::Display for MalformedVariableIntegerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Failed to parse VariableByteInteger!")
-    }
-}
-
-// This is important for other errors to wrap this one.
-impl error::Error for MalformedVariableIntegerError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        // Generic error, underlying cause isn't tracked.
-        None
-    }
-}

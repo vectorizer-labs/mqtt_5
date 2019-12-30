@@ -1,4 +1,6 @@
 use super::FromBitReader;
+use super::super::error::Result;
+use async_std::io::Read;
 
 use super::VariableByteInteger;
 
