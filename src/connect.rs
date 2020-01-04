@@ -3,15 +3,15 @@ use super::data_representation::{
     qos::QoS,
     reserved_flags::ReservedFlags, 
     UTF8EncodedString, 
+    RemainingLength,
     FromBitReader,
     BinaryData
 };
 
 use super::error::Result;
-use super::RemainingLength;
 use async_trait::async_trait;
 use async_std::io::Read;
-
+ 
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
 pub struct Connect
 (
@@ -19,11 +19,11 @@ pub struct Connect
     RemainingLength, 
     Protocol, 
     ProtocolLevel,
-    #[expose = "c_flags"] 
+    #[expose = "c_flags"]
     ConnectFlags, 
     KeepAlive,
-    Properties
-    /*ClientID,
+    Properties,
+    ClientID,
     #[flag = "c_flags.WillFlag"]
     Option<WillProperties>,
     #[flag = "c_flags.WillFlag"]
@@ -33,14 +33,14 @@ pub struct Connect
     #[flag = "c_flags.UserNameFlag"]
     Option<Username>,
     #[flag = "c_flags.PasswordFlag"]
-    Option<Password>*/
+    Option<Password>
 );
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Protocol
 {
     MQTT,
-    MQIsdp
+    MQIsdp //Older name for MQTT
 }
 
 #[async_trait]

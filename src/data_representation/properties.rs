@@ -3,8 +3,10 @@ use super::super::error::Result;
 use async_std::io::Read;
 use async_trait::async_trait;
 
+use super::VariableByteInteger;
+
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
-#[size_in_bits = 8]
+#[size_in_bits = "VariableByteInteger"]
 #[repr(u8)]
 pub enum Property
 {
@@ -50,15 +52,14 @@ impl<R> FromBitReader<R> for Properties where Self : Sized, R : Read + std::mark
 
         let end = reader.byte_count() + usize::from(length.clone()); 
 
-        println!("length : {}, start : {}, end : {}", usize::from(length), reader.byte_count(), end);
+        //println!("length : {}, start : {}, end : {}", usize::from(length), reader.byte_count(), end);
 
         //TODO: figure out a way to read the length remaining
-        while reader.byte_count() < &end
+        while reader.byte_count() < end
         {
-            props.push(Property::from_bitreader(reader).await?)
+            props.push(Property::from_bitreader(reader).await?);
         }
 
         Ok(props)
     }
-
 }

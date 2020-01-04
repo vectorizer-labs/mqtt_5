@@ -3,12 +3,10 @@ pub type TwoByteInteger = u16;
 pub type FourByteInteger = u32;
 pub type UTF8EncodedString = String;
 pub type BinaryData = Vec<u8>;
+pub type RemainingLength = VariableByteInteger;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariableByteInteger(u32);
-
-
-pub type RemainingLength = VariableByteInteger;
 
 pub mod properties;
 pub mod qos;
@@ -21,7 +19,7 @@ use async_std::io::{ Read };
 use super::error::Result;
 
 #[async_trait]
-pub trait FromBitReader<R> where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+pub trait FromBitReader<R> where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send + std::marker::Sync
 {
     async fn from_bitreader(reader : &mut BitReader<R>) -> Result<Self>;
 }
@@ -40,10 +38,7 @@ impl<R> FromBitReader<R> for bool where Self : Sized, R : Read + std::marker::Un
 {
     async fn from_bitreader(reader : &mut BitReader<R>) -> Result<bool>
     {
-        //TODO: fix reading bools
-        let num = reader.read_bits::<u8>(1).await?;
-        println!("num : {}", num);
-        Ok(num != 0)
+        Ok(reader.read_be_bits(1).await? != 0)
     }
 }
 
@@ -131,7 +126,8 @@ impl<R> FromBitReader<R> for VariableByteInteger where Self : Sized, R : Read + 
 
 impl From<VariableByteInteger> for usize 
 {
-    fn from(v: VariableByteInteger ) -> usize {
+    fn from(v: VariableByteInteger ) -> usize 
+    {
         v.0 as usize
     }
 }

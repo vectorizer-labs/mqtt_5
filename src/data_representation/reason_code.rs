@@ -2,10 +2,8 @@ use super::FromBitReader;
 use super::super::error::Result;
 use async_std::io::Read;
 
-use super::VariableByteInteger;
-
 #[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
-#[size_in_bits = "VariableByteInteger"]
+#[size_in_bits = "u8"]
 #[repr(u8)]
 pub enum ReasonCode
 {

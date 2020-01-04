@@ -6,7 +6,7 @@ use async_std::io::Read;
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
 pub struct ReservedFlags
 {
-    dup : bool,
-    qos : QoS,
-    retain : bool,
+    pub dup : bool,
+    pub qos : QoS,
+    pub retain : bool,
 }
