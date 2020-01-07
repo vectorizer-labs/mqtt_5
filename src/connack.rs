@@ -2,12 +2,9 @@ use super::data_representation::{
     reason_code::ReasonCode,
     properties::Properties, 
     reserved_flags::ReservedFlags, 
-    RemainingLength,
-    FromBitReader
+    RemainingLength
 };
-
-use super::error::Result;
-use async_std::io::Read;
+use packattack::*;
 
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
 pub struct Connack

@@ -1,4 +1,3 @@
-//TODO: Expand this definition to more errors
 /// Result type for those BitReader operations that can fail.
 pub type Result<T> = std::result::Result<T, MQTTParserError>;
 

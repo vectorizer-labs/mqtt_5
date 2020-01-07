@@ -1,6 +1,4 @@
-use super::FromBitReader;
-use async_std::io::Read;
-use super::super::error::Result;
+use packattack::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
 #[size_in_bits = 2]

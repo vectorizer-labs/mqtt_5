@@ -1,6 +1,5 @@
-use super::FromBitReader;
-use super::super::error::Result;
-use async_std::io::Read;
+use packattack::*;
+use crate::error::MQTTParserError;
 
 #[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
 #[size_in_bits = "u8"]
@@ -52,4 +51,22 @@ pub enum ReasonCode
     MaximumConnectTime = 160,
     SubscriptionIdentifiersNotSupported = 161,
     WildcardSubscriptionsNotSupported = 162
+}
+
+#[async_trait]
+impl<R> FromBitReaderWithLength<MQTTParserError, R> for Vec<ReasonCode> where R : Read + std::marker::Unpin + std::marker::Send
+{
+    async fn from_bitreader_with_length(reader : &mut bitreader_async::BitReader<R>, len : usize) -> Result<Vec<ReasonCode>, MQTTParserError>
+    {
+        let mut reasons : Vec<ReasonCode> = Vec::new();
+
+        let end = reader.byte_count() + len;
+
+        while reader.byte_count() < end
+        {
+            reasons.push(ReasonCode::from_bitreader(reader).await?);
+        }
+
+        Ok(reasons)
+    }
 }

@@ -3,15 +3,12 @@ use super::data_representation::{
     properties::Properties, 
     reserved_flags::ReservedFlags, 
     RemainingLength,
-    FromBitReader,
     UTF8EncodedString,
     TwoByteInteger,
     qos::QoS
 };
 
-
-use super::error::Result;
-use async_std::io::Read;
+use packattack::*;
 
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
 pub struct Publish
@@ -24,9 +21,11 @@ pub struct Publish
     #[flag = "r_flags.qos != QoS::AtMostOnce"]
     Option<PacketIdentifier>,
     Properties,
-    #[length = "usize::from(r_length) - reader.byte_count()"]
+    //find the remaining length by subtracting the bytes we've already read from the total size
+    //we subtract 1 byte for reserved flags and the length of the Remaining Length
+    //since these are not included in the the remaining length measure
+    #[length = "usize::from(&r_length) - (reader.byte_count()-1 - r_length.size())"]
     Payload
-
 );
 
 pub type TopicName = UTF8EncodedString;

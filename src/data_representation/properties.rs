@@ -1,9 +1,7 @@
-use super::FromBitReader;
-use super::super::error::Result;
-use async_std::io::Read;
-use async_trait::async_trait;
-
 use super::VariableByteInteger;
+
+use packattack::*;
+use super::super::error::MQTTParserError;
 
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
 #[size_in_bits = "VariableByteInteger"]
@@ -42,15 +40,15 @@ pub enum Property
 pub type Properties = Vec<Property>;
 
 #[async_trait]
-impl<R> FromBitReader<R> for Properties where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+impl<R> FromBitReader<MQTTParserError, R> for Properties where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    async fn from_bitreader(reader : &mut bitreader_async::BitReader<R>) -> Result<Properties>
+    async fn from_bitreader(reader : &mut bitreader_async::BitReader<R>) -> Result<Properties, MQTTParserError>
     {
         let length = super::VariableByteInteger::from_bitreader(reader).await?;
 
         let mut props : Vec<Property> = Vec::new();
 
-        let end = reader.byte_count() + usize::from(length.clone()); 
+        let end = reader.byte_count() + usize::from(&length); 
 
         //println!("length : {}, start : {}, end : {}", usize::from(length), reader.byte_count(), end);
 

@@ -4,20 +4,13 @@ version = "0.1.0"
 authors = ["Ethan Spurlock <ethan@spurlock.io>"]
 edition = "2018"
 
-
 [dependencies]
+packattack = { path = "C:\\Users\\Ethan\\Desktop\\packattack" }
 packattack-derive = { path = "C:\\Users\\Ethan\\Desktop\\packattack-derive" }
 bitreader_async = { path = "C:\\Users\\Ethan\\Desktop\\bitreader-async" }
-
-[dependencies.async-trait]
-version = "0.1.21"
 
 [dependencies.failure]
 version = "0.1.6"
 
 [dependencies.failure_derive]
 version = "0.1.6"
-
-[dependencies.async-std]
-version = "1.2.0"
-features = ["attributes"]

@@ -4,13 +4,11 @@ use super::data_representation::{
     reserved_flags::ReservedFlags, 
     UTF8EncodedString, 
     RemainingLength,
-    FromBitReader,
     BinaryData
 };
 
-use super::error::Result;
-use async_trait::async_trait;
-use async_std::io::Read;
+use super::error::MQTTParserError;
+use packattack::*;
  
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
 pub struct Connect
@@ -44,9 +42,9 @@ pub enum Protocol
 }
 
 #[async_trait]
-impl<R> FromBitReader<R> for Protocol where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+impl<R> FromBitReader<MQTTParserError, R> for Protocol where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    async fn from_bitreader(reader : &mut bitreader_async::BitReader<R>) -> Result<Protocol>
+    async fn from_bitreader(reader : &mut bitreader_async::BitReader<R>) -> Result<Protocol, MQTTParserError>
     {
         let protocol = UTF8EncodedString::from_bitreader(reader).await?;
 
@@ -82,6 +80,7 @@ pub type WillPayload = BinaryData;
 pub type Username = UTF8EncodedString;
 pub type Password = UTF8EncodedString;
 
+/*
 #[cfg(test)]
 mod test
 {
@@ -124,4 +123,4 @@ mod test
         });
 
     }
-}
+}*/

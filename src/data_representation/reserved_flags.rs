@@ -1,6 +1,5 @@
-use super::super::error::Result;
-use super::{ FromBitReader, qos::QoS};
-use async_std::io::Read;
+use super::{qos::QoS};
+use packattack::*;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq, FromBitReader)]
