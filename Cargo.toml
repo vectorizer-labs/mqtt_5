@@ -1,9 +1,9 @@
 [package]
 name = "mqtt_5"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Ethan Spurlock <ethan@spurlock.io>"]
 edition = "2018"
-description = "A reader that extends BufReader to allow per bit reads asynchronously"
+description = "A library for reading and writing MQTT 5.0 packets"
 license = "MIT"
 keywords = ["MQTT", "Read", "Write", "Packet"]
 repository = "https://github.com/vectorizer-labs/mqtt_5"
