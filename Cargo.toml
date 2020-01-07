@@ -3,11 +3,15 @@ name = "mqtt_5"
 version = "0.1.0"
 authors = ["Ethan Spurlock <ethan@spurlock.io>"]
 edition = "2018"
+description = "A reader that extends BufReader to allow per bit reads asynchronously"
+license = "MIT"
+keywords = ["MQTT", "Read", "Write", "Packet"]
+repository = "https://github.com/vectorizer-labs/mqtt_5"
 
 [dependencies]
-packattack = { path = "C:\\Users\\Ethan\\Desktop\\packattack" }
-packattack-derive = { path = "C:\\Users\\Ethan\\Desktop\\packattack-derive" }
-bitreader_async = { path = "C:\\Users\\Ethan\\Desktop\\bitreader-async" }
+packattack = "0.1.0"
+packattack-derive = "0.3.1"
+bitreader_async = "0.2.0"
 
 [dependencies.failure]
 version = "0.1.6"
