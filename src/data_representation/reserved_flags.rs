@@ -1,8 +1,7 @@
-use super::{qos::QoS};
+use super::qos::QoS;
 use packattack::*;
 
-#[allow(dead_code)]
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromBytes)]
 pub struct ReservedFlags
 {
     pub dup : bool,

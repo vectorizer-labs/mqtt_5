@@ -1,7 +1,7 @@
 use packattack::*;
 use crate::error::MQTTParserError;
 
-#[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Copy, Debug, PartialEq, FromReader)]
 #[size_in_bits = "u8"]
 #[repr(u8)]
 pub enum ReasonCode

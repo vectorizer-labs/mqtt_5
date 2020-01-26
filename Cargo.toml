@@ -9,12 +9,11 @@ keywords = ["MQTT", "Read", "Write", "Packet"]
 repository = "https://github.com/vectorizer-labs/mqtt_5"
 
 [dependencies]
-packattack = "0.1.0"
-packattack-derive = "0.3.1"
-bitreader_async = "0.2.0"
+packattack = {path = "C:\\Users\\Ethan\\Desktop\\packattack"}
 
 [dependencies.failure]
 version = "0.1.6"
 
-[dependencies.failure_derive]
-version = "0.1.6"
+[dev-dependencies.async-std]
+version = "1.2.0"
+features = ["attributes"]

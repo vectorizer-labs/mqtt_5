@@ -3,59 +3,65 @@ use super::VariableByteInteger;
 use packattack::*;
 use super::super::error::MQTTParserError;
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromReader)]
 #[size_in_bits = "VariableByteInteger"]
 #[repr(u8)]
 pub enum Property
 {
-    PayloadFormatIndicator(u8) = 1,
-    MessageExpiryInterval(u32) = 2,
+    PayloadFormatIndicator(#[from_bytes] u8) = 1,
+    MessageExpiryInterval(#[from_bytes] u32) = 2,
     ContentType(String) = 3,
     ResponseTopic(String) = 8,
     CorrelationData(Vec<u8>) = 9,
-    SubscriptionIdentifier(u32) = 11,
-    SessionExpiryInterval(u32) = 17,
+    SubscriptionIdentifier(#[from_bytes] u32) = 11,
+    SessionExpiryInterval(#[from_bytes] u32) = 17,
     AssignedClientIdentifer(String) = 18,
-    ServerKeepAlive(u16) = 19,
+    ServerKeepAlive(#[from_bytes] u16) = 19,
     AuthenticationMethod(String) = 21,
     AuthenticationData(Vec<u8>) = 22,
-    RequestInformation(u8) = 23,
-    WillDelayInterval(u32) = 24,
-    RequestResponseInformation(u8) = 25,
+    RequestInformation(#[from_bytes] u8) = 23,
+    WillDelayInterval(#[from_bytes] u32) = 24,
+    RequestResponseInformation(#[from_bytes] u8) = 25,
     ResponseInformation(String) = 26,
     ServerReference(String) = 28,
     ReasonString(String) = 31,
-    RecieveMaximum(u16) = 33,
-    TopicAliasMaximum(u16) = 34,
-    TopicAlias(u16) = 35,
-    MaximumQoS(u8) = 36,
-    RetainAvailible(u8) = 37,
+    RecieveMaximum(#[from_bytes] u16) = 33,
+    TopicAliasMaximum(#[from_bytes] u16) = 34,
+    TopicAlias(#[from_bytes] u16) = 35,
+    MaximumQoS(#[from_bytes] u8) = 36,
+    RetainAvailible(#[from_bytes] u8) = 37,
     UserProperty(String) = 38,
-    MaximumPacketSize(u32) = 39,
-    WildcardSubscriptionAvailible(u8) = 40,
-    SubscriptionIdentifierAvailible(u8) = 41,
-    SharedSubscriptionAvailible(u8) = 42
+    MaximumPacketSize(#[from_bytes] u32) = 39,
+    WildcardSubscriptionAvailible(#[from_bytes] u8) = 40,
+    SubscriptionIdentifierAvailible(#[from_bytes] u8) = 41,
+    SharedSubscriptionAvailible(#[from_bytes] u8) = 42
 }
 
 pub type Properties = Vec<Property>;
 
+
+//TODO: Implement #[length] attribute
 #[async_trait]
-impl<R> FromBitReader<MQTTParserError, R> for Properties where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+impl<R> FromReader<MQTTParserError, R> for Properties where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    async fn from_bitreader(reader : &mut bitreader_async::BitReader<R>) -> Result<Properties, MQTTParserError>
+    async fn from_reader(reader : &mut R) -> Result<Properties, MQTTParserError>
     {
-        let length = super::VariableByteInteger::from_bitreader(reader).await?;
+        let mut length_array : [u8;2] = [0;2];
+        reader.read_exact(&mut length_array).await?;
+
+        let length : u16 = <u16>::from_be_bytes(length_array);
+
+        let buffer : Vec<u8> = vec![0; length as usize];
 
         let mut props : Vec<Property> = Vec::new();
 
-        let end = reader.byte_count() + usize::from(&length); 
+        let mut sclice : &[u8] = buffer.as_slice();
 
-        //println!("length : {}, start : {}, end : {}", usize::from(length), reader.byte_count(), end);
-
-        //TODO: figure out a way to read the length remaining
-        while reader.byte_count() < end
+        //reading from a slice updates the remaining length
+        //so we can just check the len after each read
+        while sclice.len() > 0
         {
-            props.push(Property::from_bitreader(reader).await?);
+            props.push(Property::from_reader(&mut sclice).await?);
         }
 
         Ok(props)

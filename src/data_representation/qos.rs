@@ -1,7 +1,8 @@
 use packattack::*;
 
-#[derive(Clone, Copy, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Copy, Debug, PartialEq, FromBytes)]
 #[size_in_bits = 2]
+#[from_bits]
 #[repr(u8)]
 pub enum QoS
 {

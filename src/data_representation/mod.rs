@@ -7,24 +7,35 @@ pub type BinaryData = Vec<u8>;
 pub type RemainingLength = VariableByteInteger;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct VariableByteInteger(u32,u8);
+pub struct VariableByteInteger(u32);
 
 pub mod properties;
 pub mod qos;
-pub mod reason_code;
+//pub mod reason_code;
 pub mod reserved_flags;
+
 
 use packattack::*;
 use super::error::*;
 
+//#[length = Expr] should resolve to a (size : u8, value : Vec<u8>)
+//TODO: Fix integers and fix from_bytes holes in general
 #[async_trait]
-impl<R> FromBitReader<MQTTParserError, R> for UTF8EncodedString where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+impl<R> FromReader<MQTTParserError, R> for UTF8EncodedString where Self : Sized, 
+R : Read + std::marker::Unpin + std::marker::Send
 {
-    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<UTF8EncodedString>
+    async fn from_reader(reader : &mut R) -> Result<UTF8EncodedString>
     {
-        let length = reader.read_aligned_be::<u16>().await?;
+        let mut length_array : [u8;2] = [0;2];
+        reader.read_exact(&mut length_array).await?;
 
-        let vec_buffer : Vec<u8> = reader.read_u8_slice_aligned(length as usize).await?;
+        let length : u16 = <u16>::from_be_bytes(length_array);
+
+        //have to assign zeroes to the first count # of items
+        //other wise it just thinks the slice is size 0
+        let mut vec_buffer : Vec<u8> = vec![0; length as usize];
+
+        reader.read_exact(vec_buffer.as_mut_slice()).await?;
 
         let result = String::from_utf8(vec_buffer)?;
 
@@ -32,43 +43,55 @@ impl<R> FromBitReader<MQTTParserError, R> for UTF8EncodedString where Self : Siz
     }
 }
 
-#[async_trait]
-impl<R> FromBitReader<MQTTParserError, R> for BinaryData where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
-{
-    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<BinaryData>
-    {
-        let len = reader.read_aligned_be::<u16>().await?;
 
-        Ok(reader.read_u8_slice_aligned(len as usize).await?)
+#[async_trait]
+impl<R> FromReader<MQTTParserError, R> for BinaryData where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+{
+    async fn from_reader(reader : &mut R) -> Result<BinaryData>
+    {
+        let mut length_array : [u8;2] = [0;2];
+        reader.read_exact(&mut length_array).await?;
+
+        let length : u16 = <u16>::from_be_bytes(length_array);
+
+        //have to assign zeroes to the first count # of items
+        //other wise it just thinks the slice is size 0
+        let mut vec_buffer : Vec<u8> = vec![0; length as usize];
+
+        reader.read_exact(vec_buffer.as_mut_slice()).await?;
+
+        Ok(vec_buffer)
     }
 }
 
 #[async_trait]
-impl<R> FromBitReader<MQTTParserError, R> for VariableByteInteger where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
+impl<R> FromReader<MQTTParserError, R> for VariableByteInteger where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
-    async fn from_bitreader(reader : &mut BitReader<R>) -> Result<VariableByteInteger>
+    async fn from_reader(reader : &mut R) -> Result<VariableByteInteger>
     {
         let mut multiplier: u32 = 1;
         let mut value: u32 = 0;
         let mut count : u8 = 0;
 
+        let mut encoded_byte : [u8; 1] = [0];
+
         loop
         {
             count += 1;
             //read the next byte
-            let encoded_byte = reader.read_aligned_be::<u8>().await?;
+            reader.read_exact(&mut encoded_byte).await?;
 
-            value += (encoded_byte as u32 & 127) * multiplier;
+            value += (encoded_byte[0] as u32 & 127) * multiplier;
 
             //if we exceed the 4 byte limit throw MalformedVariableIntegerError
             if multiplier > 128*128*128 {  return Err(MQTTParserError::MalformedVariableIntegerError); }
 
             multiplier *= 128;
 
-            if(encoded_byte & 128) == 0 { break; }
+            if(encoded_byte[0] & 128) == 0 { break; }
         }
 
-        Ok(VariableByteInteger(value,count))
+        Ok(VariableByteInteger(value))
     }
 }
 
@@ -85,14 +108,6 @@ impl From<VariableByteInteger> for usize
     fn from(v: VariableByteInteger ) -> usize 
     {
         v.0 as usize
-    }
-}
-
-impl VariableByteInteger
-{
-    pub fn size(&self) -> usize
-    {
-        self.1.clone() as usize
     }
 }
 
