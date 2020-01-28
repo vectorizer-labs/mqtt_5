@@ -11,7 +11,7 @@ pub struct VariableByteInteger(u32);
 
 pub mod properties;
 pub mod qos;
-//pub mod reason_code;
+pub mod reason_code;
 pub mod reserved_flags;
 
 
@@ -43,7 +43,6 @@ R : Read + std::marker::Unpin + std::marker::Send
     }
 }
 
-
 #[async_trait]
 impl<R> FromReader<MQTTParserError, R> for BinaryData where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
@@ -71,13 +70,13 @@ impl<R> FromReader<MQTTParserError, R> for VariableByteInteger where Self : Size
     {
         let mut multiplier: u32 = 1;
         let mut value: u32 = 0;
-        let mut count : u8 = 0;
+        //let mut count : u8 = 0;
 
         let mut encoded_byte : [u8; 1] = [0];
 
         loop
         {
-            count += 1;
+            //count += 1;
             //read the next byte
             reader.read_exact(&mut encoded_byte).await?;
 
@@ -110,25 +109,3 @@ impl From<VariableByteInteger> for usize
         v.0 as usize
     }
 }
-
-/*
-#[async_trait]
-impl<R, T> FromBitReaderWithLength<MQTTParserError, R> for Vec<T> 
-where T : Sized + FromBitReader<MQTTParserError, R> + std::marker::Send, 
-      R : Read + std::marker::Unpin + std::marker::Send
-{
-    async fn from_bitreader_with_length(reader : &mut BitReader<R>, len : usize) -> Result<Vec<T>>
-    {
-        let mut items : Vec<T> = Vec::new();
-
-        let end = reader.byte_count() + len;
-
-        while reader.byte_count() < end 
-        {
-            items.push(<T>::from_bitreader(reader).await?);
-        }
-
-        Ok(items)
-    }
-}*/
-

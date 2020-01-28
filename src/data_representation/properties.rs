@@ -39,29 +39,27 @@ pub enum Property
 
 pub type Properties = Vec<Property>;
 
-
-//TODO: Implement #[length] attribute
 #[async_trait]
 impl<R> FromReader<MQTTParserError, R> for Properties where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
     async fn from_reader(reader : &mut R) -> Result<Properties, MQTTParserError>
     {
-        let mut length_array : [u8;2] = [0;2];
-        reader.read_exact(&mut length_array).await?;
 
-        let length : u16 = <u16>::from_be_bytes(length_array);
+        let length : usize = usize::from(<VariableByteInteger>::from_reader(reader).await?);
 
-        let buffer : Vec<u8> = vec![0; length as usize];
+        let mut buffer : Vec<u8> = vec![0; length];
+
+        reader.read_exact(&mut buffer).await?;
+
+        let mut slice : &[u8] = buffer.as_slice();
 
         let mut props : Vec<Property> = Vec::new();
 
-        let mut sclice : &[u8] = buffer.as_slice();
-
         //reading from a slice updates the remaining length
         //so we can just check the len after each read
-        while sclice.len() > 0
+        while slice.len() > 0
         {
-            props.push(Property::from_reader(&mut sclice).await?);
+            props.push(Property::from_reader(&mut slice).await?);
         }
 
         Ok(props)

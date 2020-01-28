@@ -17,3 +17,6 @@ version = "0.1.6"
 [dev-dependencies.async-std]
 version = "1.2.0"
 features = ["attributes"]
+
+[profile.bench]
+opt-level = 3

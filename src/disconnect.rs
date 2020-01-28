@@ -7,7 +7,7 @@ use super::data_representation::{
 
 use packattack::*;
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromReader)]
 pub struct Disconnect
 (
     ReservedFlags,

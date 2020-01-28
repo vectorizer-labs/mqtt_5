@@ -1,6 +1,5 @@
 use super::data_representation::{
     properties::Properties, 
-    reserved_flags::ReservedFlags, 
     reason_code::ReasonCode,
     RemainingLength,
     TwoByteInteger,
@@ -11,28 +10,29 @@ use super::data_representation::{
 use packattack::*;
 use super::error::MQTTParserError;
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromReader)]
+#[hint = "RemainingLength"]
 pub struct Subscribe
 (
-    ReservedFlags,
-    #[expose = "r_length"]
-    RemainingLength,
-    PacketIdentifier,
-    ReasonCode,
+    #[from_bytes] PacketIdentifier,
+    #[from_bytes] ReasonCode,
     Properties,
     //find the remaining length by subtracting the bytes we've already read from the total size
     //we subtract 1 byte for reserved flags and the length of the Remaining Length
     //since these are not included in the the remaining length measure
-    #[length = "usize::from(&r_length) - (reader.byte_count()-1 - r_length.size())"]
+    #[payload]
     TopicFilterList
 );
 
 pub type PacketIdentifier = TwoByteInteger;
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
-pub struct TopicFilter(UTF8EncodedString, SubscriptionOptions);
+#[derive(Clone, Debug, PartialEq, FromReader)]
+pub struct TopicFilter(
+    UTF8EncodedString, 
+    #[from_bytes] SubscriptionOptions
+);
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromBytes)]
 pub struct SubscriptionOptions
 {
     maximum_qos : QoS,
@@ -42,14 +42,16 @@ pub struct SubscriptionOptions
     reserved : ReservedSubscriptionBits
 }
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromBytes)]
+#[from_bits]
 #[size_in_bits = 2]
 pub enum ReservedSubscriptionBits
 {
     Clear = 0
 }
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromBytes)]
+#[from_bits]
 #[size_in_bits = 2]
 pub enum RetainHandling
 {
@@ -60,21 +62,24 @@ pub enum RetainHandling
 
 pub type TopicFilterList = Vec<TopicFilter>; 
 
-
-#[async_trait]
-impl<R> FromBitReaderWithLength<MQTTParserError, R> for TopicFilterList where R : Read + std::marker::Unpin + std::marker::Send
+/*
+impl Bitsize for TopicFilterList 
 {
-    async fn from_bitreader_with_length(reader : &mut bitreader_async::BitReader<R>, len : usize) -> Result<TopicFilterList, MQTTParserError>
+    const SIZE_IN_BITS : usize = 0; 
+}
+
+impl FromBytes<(), &mut &[u8]> for TopicFilterList where Self : Sized
+{
+    #[inline]
+    fn from_bytes(bytes : &mut &[u8]) -> std::result::Result<TopicFilterList,()>
     {
         let mut topics : Vec<TopicFilter> = Vec::new();
 
-        let end = reader.byte_count() + len;
-
-        while reader.byte_count() < end
+        while bytes.len() > 0
         {
-            topics.push(TopicFilter::from_bitreader(reader).await?);
+            topics.push(TopicFilter::from_reader(bytes)?);
         }
 
         Ok(topics)
     }
-}
+}*/

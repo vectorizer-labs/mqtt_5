@@ -1,6 +1,4 @@
-use packattack::*;
-
-/// Result type for those BitReader operations that can fail.
+/// Result type for those parser operations that can fail.
 pub type Result<T> = std::result::Result<T, MQTTParserError>;
 
 #[derive(Fail, Debug)]
@@ -12,8 +10,10 @@ pub enum MQTTParserError
     FromUtf8Error(#[cause] std::string::FromUtf8Error),
     #[fail(display = "IO Error: {}", _0)]
     IO(#[cause] std::io::Error),
-    #[fail(display = "PackattackError Error: {}", _0)]
+    #[fail(display = "Packattack Error: {}", _0)]
     PackattackError(packattack::PackattackParserError),
+    #[fail(display = "SliceCopyError, This is likely an internal error due to a bad implementation:  {}", _0)]
+    SliceCopyError(std::array::TryFromSliceError),
     #[fail(display = "Non Error Type for non failable parsing: This should never be reached!")]
     None
 }
@@ -31,6 +31,14 @@ impl From<packattack::error::PackattackParserError> for MQTTParserError
     fn from(error : packattack::error::PackattackParserError) -> MQTTParserError
     {
         MQTTParserError::PackattackError(error)
+    }
+}
+
+impl From<std::array::TryFromSliceError> for MQTTParserError
+{
+    fn from(error : std::array::TryFromSliceError) -> MQTTParserError
+    {
+        MQTTParserError::SliceCopyError(error)
     }
 }
 

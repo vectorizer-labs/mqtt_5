@@ -4,30 +4,25 @@ use super::data_representation::{
     reserved_flags::ReservedFlags, 
     RemainingLength,
     UTF8EncodedString,
-    TwoByteInteger,
     qos::QoS
 };
 
 use packattack::*;
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromReader)]
 pub struct Publish
 (
-    #[expose = "r_flags"]
-    ReservedFlags,
-    #[expose = "r_length"]
+    #[hint] 
     RemainingLength,
-    TopicName,
-    #[flag = "r_flags.qos != QoS::AtMostOnce"]
+    TopicName, 
+    #[flag = "r_flags.qos != QoS::AtMostOnce"] 
+    #[from_bytes] 
     Option<PacketIdentifier>,
-    Properties,
-    //find the remaining length by subtracting the bytes we've already read from the total size
-    //we subtract 1 byte for reserved flags and the length of the Remaining Length
-    //since these are not included in the the remaining length measure
-    #[length = "usize::from(&r_length) - (reader.byte_count()-1 - r_length.size())"]
+    Properties, 
+    #[payload] 
     Payload
 );
 
 pub type TopicName = UTF8EncodedString;
-pub type PacketIdentifier = TwoByteInteger;
+pub type PacketIdentifier = u16;
 pub type Payload = BinaryData;

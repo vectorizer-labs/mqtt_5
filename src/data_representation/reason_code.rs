@@ -1,8 +1,9 @@
 use packattack::*;
 use crate::error::MQTTParserError;
 
-#[derive(Clone, Copy, Debug, PartialEq, FromReader)]
-#[size_in_bits = "u8"]
+#[derive(Clone, Copy, Debug, PartialEq, FromBytes)]
+#[size_in_bits = 8]
+#[from_bytes]
 #[repr(u8)]
 pub enum ReasonCode
 {
@@ -53,20 +54,29 @@ pub enum ReasonCode
     WildcardSubscriptionsNotSupported = 162
 }
 
+/*
 #[async_trait]
-impl<R> FromBitReaderWithLength<MQTTParserError, R> for Vec<ReasonCode> where R : Read + std::marker::Unpin + std::marker::Send
+impl<R> FromReader<MQTTParserError, R> for Vec<ReasonCode> where R : Read + std::marker::Unpin + std::marker::Send
 {
-    async fn from_bitreader_with_length(reader : &mut bitreader_async::BitReader<R>, len : usize) -> Result<Vec<ReasonCode>, MQTTParserError>
+    async fn from_reader(reader : &mut R) -> Result<Vec<ReasonCode>, MQTTParserError>
     {
-        let mut reasons : Vec<ReasonCode> = Vec::new();
+        let length : usize = usize::from(<VariableByteInteger>::from_reader(reader).await?);
 
-        let end = reader.byte_count() + len;
+        let mut buffer : Vec<u8> = vec![0; length];
 
-        while reader.byte_count() < end
+        reader.read_exact(&mut buffer).await?;
+
+        let mut slice : &[u8] = buffer.as_slice();
+
+        let mut reason_codes : Vec<ReasonCode> = Vec::new();
+
+        //reading from a slice updates the remaining length
+        //so we can just check the len after each read
+        while slice.len() > 0
         {
-            reasons.push(ReasonCode::from_bitreader(reader).await?);
+            reason_codes.push(ReasonCode::from_reader(&mut slice).await?);
         }
 
-        Ok(reasons)
+        Ok(reason_codes)
     }
-}
+}*/

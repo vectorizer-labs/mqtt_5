@@ -1,6 +1,5 @@
 use super::data_representation::{
-    properties::Properties, 
-    reserved_flags::ReservedFlags, 
+    properties::Properties,
     reason_code::ReasonCode,
     RemainingLength,
     TwoByteInteger
@@ -8,14 +7,13 @@ use super::data_representation::{
 
 use packattack::*;
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromReader)]
 pub struct Puback
 (
-    ReservedFlags,
     RemainingLength,
-    PacketIdentifier,
-    ReasonCode,
+    #[from_bytes] PacketIdentifier,
+    #[from_bytes] ReasonCode,
     Properties
 );
 
-pub type PacketIdentifier = TwoByteInteger;
+pub type PacketIdentifier = u16;

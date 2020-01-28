@@ -9,7 +9,7 @@ use super::data_representation::{
 use packattack::*;
 use crate::error::MQTTParserError;
 
-#[derive(Clone, Debug, PartialEq, FromBitReader)]
+#[derive(Clone, Debug, PartialEq, FromReader)]
 pub struct Unsubscribe
 (
     ReservedFlags,
@@ -29,7 +29,7 @@ pub type PacketIdentifier = TwoByteInteger;
 pub type TopicFilter = UTF8EncodedString;
 
 #[async_trait]
-impl<R> FromBitReaderWithLength<MQTTParserError, R> for Vec<TopicFilter> where R : Read + std::marker::Unpin + std::marker::Send
+impl<R> FromReaderWithLength<MQTTParserError, R> for Vec<TopicFilter> where R : Read + std::marker::Unpin + std::marker::Send
 {
     async fn from_bitreader_with_length(reader : &mut bitreader_async::BitReader<R>, len : usize) -> Result<Vec<TopicFilter>, MQTTParserError>
     {
