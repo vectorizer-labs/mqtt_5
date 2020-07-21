@@ -3,7 +3,7 @@ use super::VariableByteInteger;
 use packattack::*;
 use super::super::error::MQTTParserError;
 
-#[derive(Clone, Debug, PartialEq, FromReader)]
+#[derive(Clone, Debug, PartialEq, FromBytes)]
 #[size_in_bits = "VariableByteInteger"]
 #[repr(u8)]
 pub enum Property
@@ -39,6 +39,7 @@ pub enum Property
 
 pub type Properties = Vec<Property>;
 
+/*
 #[async_trait]
 impl<R> FromReader<MQTTParserError, R> for Properties where Self : Sized, R : Read + std::marker::Unpin + std::marker::Send
 {
@@ -60,6 +61,32 @@ impl<R> FromReader<MQTTParserError, R> for Properties where Self : Sized, R : Re
         while slice.len() > 0
         {
             props.push(Property::from_reader(&mut slice).await?);
+        }
+
+        Ok(props)
+    }
+}*/
+
+impl FromBytes<MQTTParserError, &mut &[u8]> for Properties where Self : Sized
+{
+    #[inline]
+    fn from_bytes(bytes : &mut &[u8]) -> Result<VariableByteInteger>
+    {
+        let length : usize = usize::from(<VariableByteInteger>::from_bytes(bytes));
+
+        //TODO: make sure bytes is long enough
+        //read a slice of length
+        let (slice, b) = bytes.split_at(length);
+        //update slice len
+        *bytes = b;
+
+        let mut props : Vec<Property> = Vec::new();
+
+        //reading from a slice updates the remaining length
+        //so we can just check the len after each read
+        while slice.len() > 0
+        {
+            props.push(Property::from_bytes(&mut slice));
         }
 
         Ok(props)

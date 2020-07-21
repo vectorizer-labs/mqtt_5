@@ -4,14 +4,14 @@
 #[macro_use] extern crate failure;
 
 mod connect;
-mod connack;
+/*mod connack;
 //mod publish; use publish::{ PacketIdentifier, TopicName, Payload };
 mod puback;
 mod pubrec;
 mod pubrel;
 mod pubcomp;
-//mod subscribe;
-/*mod suback;
+mod subscribe;
+mod suback;
 mod unsubscribe;
 mod unsuback;
 mod pingreq;
@@ -38,12 +38,12 @@ use data_representation::{ reserved_flags::ReservedFlags, RemainingLength, prope
 pub enum Packet 
 {
     CONNECT(#[from_bits] ReservedFlags, connect::Connect) = 1,
-    CONNACK(#[from_bits] ReservedFlags, connack::Connack) = 2,
+    //CONNACK(#[from_bits] ReservedFlags, connack::Connack) = 2,
     //PUBLISH(#[expose = "r_flags"] #[from_bits] ReservedFlags, publish::Publish) = 3,
-    PUBACK(#[from_bits] ReservedFlags, puback::Puback) = 4,
-    PUBREC(#[from_bits] ReservedFlags, pubrec::Pubrec) = 5,
-    PUBREL(#[from_bits] ReservedFlags, pubrel::Pubrel) = 6,
-    PUBCOMP(#[from_bits] ReservedFlags, pubcomp::Pubcomp) = 7,
+    //PUBACK(#[from_bits] ReservedFlags, puback::Puback) = 4,
+    //PUBREC(#[from_bits] ReservedFlags, pubrec::Pubrec) = 5,
+    //PUBREL(#[from_bits] ReservedFlags, pubrel::Pubrel) = 6,
+    //PUBCOMP(#[from_bits] ReservedFlags, pubcomp::Pubcomp) = 7,
     //SUBSCRIBE(#[from_bits] ReservedFlags, subscribe::Subscribe) = 8,
     //SUBACK(()) = 9,
     //UNSUBSCRIBE(()) = 10,
@@ -54,11 +54,9 @@ pub enum Packet
     //AUTH(()) = 15
 }
 
+
 //TODO: copy the first byte from enum into from_bytes of first type
 //TODO: fix from_bytes for derived types
-//also #[length]
-
-
 #[cfg(test)]
 mod test
 {
@@ -105,7 +103,7 @@ mod test
 
                 let packet = Packet::from_reader(&mut bytes.as_ref()).await.unwrap();
 
-                //print!("Packect : {:#?}", packet);
+                print!("Packect : {:#?}", packet);
 
                 packet
 

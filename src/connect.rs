@@ -1,4 +1,3 @@
-
 use super::data_representation::{
     properties::Properties, 
     qos::QoS,
@@ -10,32 +9,26 @@ use super::data_representation::{
 use packattack::*;
  
 #[derive(Clone, Debug, PartialEq, FromReader)]
-#[hint = "RemainingLength"]
+//#[hint = "RemainingLength"]
 pub struct Connect
 (
     Protocol,
-    #[from_bytes]
-    ProtocolLevel,
-    #[expose = "c_flags"]
-    #[from_bytes]
-    ConnectFlags,
-    #[from_bytes]
-    KeepAlive,
+    #[from_bytes] ProtocolLevel,
+    #[expose = "c_flags"] #[from_bytes] ConnectFlags,
+    #[from_bytes] KeepAlive,
     Properties,
     ClientID,
-    #[flag = "c_flags.WillFlag"]
-    Option<WillProperties>,
-    #[flag = "c_flags.WillFlag"]
-    Option<WillTopic>,
-    #[flag = "c_flags.WillFlag"]
-    Option<WillPayload>,
-    #[flag = "c_flags.UserNameFlag"]
-    Option<Username>,
-    #[flag = "c_flags.PasswordFlag"]
-    Option<Password>
+    #[flag = "c_flags.WillFlag"] Option<WillProperties>,
+    #[flag = "c_flags.WillFlag"] Option<WillTopic>,
+    #[flag = "c_flags.WillFlag"] Option<WillPayload>,
+    #[flag = "c_flags.UserNameFlag"] Option<Username>,
+    #[flag = "c_flags.PasswordFlag"] Option<Password>
 );
 
 
+//TODO: implement a fixed size buffer for the max size of the string discriminant
+//since we will only ever need to read the largest one,
+//we can do array based comparison
 #[derive(Clone, Debug, PartialEq, FromReader)]
 #[size_in_bits = "UTF8EncodedString"]
 #[str]
@@ -52,7 +45,6 @@ pub enum Protocol
 pub type ProtocolLevel = u8;
 pub type KeepAlive = u16;
 
-#[allow(non_snake_case)]
 #[derive(Clone, Copy, Debug, PartialEq, FromBytes)]
 pub struct ConnectFlags
 {
@@ -65,12 +57,9 @@ pub struct ConnectFlags
     Reserve : bool
 }
 
-
 pub type ClientID = UTF8EncodedString;
 pub type WillProperties = Properties;
 pub type WillTopic = UTF8EncodedString;
 pub type WillPayload = BinaryData;
 pub type Username = UTF8EncodedString;
 pub type Password = UTF8EncodedString;
-
-
